@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
+#include <math.h>
 #include "mystack.h"
 #include "token.h"
 #include "calc.h"
@@ -14,7 +15,7 @@ Elem original[MAXLINE+1];
 int readline(Elem *expression);
 
 /* convert character to number */
-int StrToNum(char str);
+double StrToNum(char *str);
 
 float calc_rpn(Elem *rpn);
 
@@ -63,7 +64,7 @@ Elem calculate(Elem *a, char operator, Elem *b)
         inter.Unit.num = a->Unit.num * b->Unit.num;
         break;
     case '/':
-        inter.Unit.num = (float)a->Unit.num / b->Unit.num;
+        inter.Unit.num = a->Unit.num / b->Unit.num;
         break;
     }
 
@@ -100,14 +101,25 @@ int main(int argc, char *argv[])
 int readline(Elem *expression)
 {
     char ch;
+    char temp[10];
     int cnt = 0;
+    int p;
 
     while ((ch=getchar()) != '\n') {
         if (cnt<MAXLINE) {
             if (IsNum(ch)) {
-                expression[cnt].Unit.num = StrToNum(ch);
-                expression[cnt].kind = NUM;
-                cnt++;
+                temp[0] = ch;
+                while (IsNum(ch=getchar())) {
+                    p = 1;
+                    temp[p++] = ch;
+                }
+                expression[cnt].Unit.num = StrToNum(temp);
+                expression[cnt++].kind = NUM;
+                if (IsOperator(ch)) {
+                    expression[cnt].Unit.operator = ch;
+                    expression[cnt].kind = CHAR;
+                    cnt++;
+                }
             }
             else if (IsOperator(ch)) {
                 expression[cnt].Unit.operator = ch;
@@ -135,7 +147,27 @@ bool IsOperator(char ch)
     else return false;
 }
 
-int StrToNum(char str)
+double StrToNum(char *str)
 {
-    return str - '0';
+    char *p = str, *q;
+    double result = 0;
+    int cnt = 0;
+
+    for (; *p != '.' || *p != '\0'; p++) {
+        cnt++;
+    }
+    q = p+1;
+    for (int i = 0; p != str; p--, i++) {
+        result += (*p - '0') * pow(10.0, i);
+    }
+
+    if (cnt < strlen(str)) {
+        for (; *q != '\0'; q++) {
+            cnt++;
+        }
+        for (int i=cnt; i>0; i--) {
+            result += (*q - '0') * pow(10.0, 0-i);
+        }
+    }
+    return result;
 }

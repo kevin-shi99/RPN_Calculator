@@ -7,7 +7,7 @@ typedef enum {OK = 0, ERROR = -1} Status;
 typedef enum {NUM = 0, CHAR = 1} Choice;
 
 typedef union {
-    float num;
+    double num;
     char operator;
 } unit;
 
