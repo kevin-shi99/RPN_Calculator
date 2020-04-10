@@ -12,7 +12,7 @@ Elem original[MAXLINE+1];
 
 // Prototypes
 /* Get expression, skip whitespace, returns number of characters read in. Read in at most MAXLINE characters.*/
-int readline(Elem *expression);
+int readline(void);
 
 /* convert character to number */
 double StrToNum(char *str);
@@ -88,55 +88,57 @@ int main(int argc, char *argv[])
         printf("Enter a math expression below:\n");
         
         // Read in math expression and convert to RPN (token.c & mystack.c)
-        readline(original);
+        readline();
         convert_to_rpn(original, reverse);
         // Calculate RPN expression (calc.c & mystack.c)
         result = calc_rpn(reverse);
 
-        printf("Result: %.2f\n\n", result);
+        printf("Result: %.4f\n\n", result);
     }
     return 0;
 }
 
-int readline(Elem *expression)
+int readline(void)
 {
     char ch;
-    char temp[10];
+    char temp[10] = {'\0'};
     int cnt = 0;
     int p;
 
     while ((ch=getchar()) != '\n') {
+        /* Initialize temp */
+        for (int i=0; i<10; i++) temp[i] = '\0';
         if (cnt<MAXLINE) {
             if (IsNum(ch)) {
                 temp[0] = ch;
+                p = 1;
                 while (IsNum(ch=getchar())) {
-                    p = 1;
                     temp[p++] = ch;
                 }
-                expression[cnt].Unit.num = StrToNum(temp);
-                expression[cnt++].kind = NUM;
+                original[cnt].Unit.num = StrToNum(temp);
+                original[cnt++].kind = NUM;
                 if (IsOperator(ch)) {
-                    expression[cnt].Unit.operator = ch;
-                    expression[cnt].kind = CHAR;
+                    original[cnt].Unit.operator = ch;
+                    original[cnt].kind = CHAR;
                     cnt++;
                 }
             }
             else if (IsOperator(ch)) {
-                expression[cnt].Unit.operator = ch;
-                expression[cnt].kind = CHAR;
+                original[cnt].Unit.operator = ch;
+                original[cnt].kind = CHAR;
                 cnt++;
             }
         }
     }
     // Append a Null character at the end of the array to mark the end
-    expression[cnt].kind = CHAR;
-    expression[cnt].Unit.operator = '\0';
+    original[cnt].kind = CHAR;
+    original[cnt].Unit.operator = '\0';
     return cnt;
 }
 
 bool IsNum(char ch)
 {
-    if (ch>='0' && ch<='9') return true;
+    if (ch>='0' && ch<='9' || ch == '.') return true;
     else return false;
 }
 
@@ -153,20 +155,21 @@ double StrToNum(char *str)
     double result = 0;
     int cnt = 0;
 
-    for (; *p != '.' || *p != '\0'; p++) {
+    for (; *p != '.' && *p != '\0'; p++) {
         cnt++;
     }
     q = p+1;
-    for (int i = 0; p != str; p--, i++) {
-        result += (*p - '0') * pow(10.0, i);
+    for (int i = 0; p != str; i++) {
+        result += (*(--p) - '0') * pow(10, i);
     }
 
     if (cnt < strlen(str)) {
-        for (; *q != '\0'; q++) {
+        for (cnt = 0; *q != '\0'; q++) {
             cnt++;
         }
+        q--;
         for (int i=cnt; i>0; i--) {
-            result += (*q - '0') * pow(10.0, 0-i);
+            result += (*(q--) - '0') * pow(10, 0-i);
         }
     }
     return result;
